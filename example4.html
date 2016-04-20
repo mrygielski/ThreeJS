@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html >
+<head>
+	<title>Three.js - Example 4 - Load OBJ file</title>
+	<meta charset="UTF-8">
+	<style>
+		body, html {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+    </style>
+    <script src='three.min.js'></script>
+    <script src='TrackballControls.js'></script>
+    <script src='OBJLoader.js'></script>
+	</head>
+
+	<body>
+  
+		<script>
+	
+			var camera, 
+				scene, 
+				renderer;
+			
+			init();
+			animate();
+			
+			function init() {
+				
+				camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 20000);
+				camera.position.z = 150;
+				
+				scene = new THREE.Scene();
+				
+				var ambient = new THREE.AmbientLight(0xFFFFFF);
+				scene.add(ambient);
+				
+				var directionalLight = new THREE.DirectionalLight(0xAAAAAA);
+				directionalLight.position.set(0, 0, 1);
+				scene.add(directionalLight);
+				
+				var manager = new THREE.LoadingManager();
+				manager.onProgress = function (item, loaded, total) {
+					console.log(item, loaded, total);
+				};
+				
+				var texture = new THREE.Texture();
+				var onProgress = function (xhr) {
+					if (xhr.lengthComputable) {
+						var percentComplete = xhr.loaded / xhr.total * 100;
+						console.log(Math.round(percentComplete, 2) + '% downloaded');
+					}
+				};
+				var onError = function (xhr) {
+				};
+				
+				var loader = new THREE.ImageLoader(manager);
+				loader.load('obj/notebook.jpg', function (image) {
+					texture.image = image;
+					texture.needsUpdate = true;
+				});
+				
+				var loader = new THREE.OBJLoader(manager);
+				loader.load('obj/notebook.obj', function (object) {
+					object.traverse(function (child) {
+						if (child instanceof THREE.Mesh) {
+							child.material.map = texture;
+						}
+					});
+					object.position.y -= 12;
+					scene.add(object);
+				}, onProgress, onError);
+				
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				renderer.setClearColor(0x3f3f3f, 1);
+				
+				document.body.appendChild(renderer.domElement);
+				
+				controls = new THREE.TrackballControls(camera);
+				controls.rotateSpeed = 4;
+				
+				window.addEventListener('resize', onWindowResize, false);
+				
+			}
+			
+			function onWindowResize() {
+				
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			
+			}
+			
+			function animate() {
+				
+				requestAnimationFrame(animate);
+				controls.update();				
+				renderer.render(scene, camera);
+				
+			}
+			
+		</script>
+    
+  </body>
+</html>
